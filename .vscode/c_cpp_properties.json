@@ -1,0 +1,36 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/esp-idf",
+                "${workspaceFolder}/mesh-provisioner",
+                "${workspaceFolder}/esp-idf/components/esp_common/include",
+                "${workspaceFolder}/esp-idf/components/log/include",
+                "${workspaceFolder}/esp-idf/components/nvs_flash/include",
+                "${workspaceFolder}/esp-idf/components/bt/include",
+                "${workspaceFolder}/esp-idf/components/bt/host/bluedroid/api/include/api",
+                "${workspaceFolder}/esp-idf/components/bt/common/osi/include",
+                "${workspaceFolder}/esp-idf/components/bt/esp_ble_mesh/api",
+                "${workspaceFolder}/esp-idf/components/bt/esp_ble_mesh/api/core/include",
+                "${workspaceFolder}/esp-idf/components/bt/esp_ble_mesh/api/models/include",
+                "${workspaceFolder}/esp-idf/components/bt/esp_ble_mesh/mesh_core/include",
+                "${workspaceFolder}/esp-idf/components/spi_flash/sim/sdkconfig",
+                "${workspaceFolder}/esp-idf/components/esp_rom/include",
+                "${workspaceFolder}/esp-idf/components/esp32/include",
+                "${workspaceFolder}/esp-idf/components/freertos/include",
+                "${workspaceFolder}/esp-idf/components/xtensa/include",
+                "${workspaceFolder}/esp-idf/components/xtensa/esp32/include",
+                "${workspaceFolder}/esp-idf/components/spi_flash/include",
+                "${workspaceFolder}/esp-idf/components/soc/include",
+                "${workspaceFolder}/esp-idf/components/soc/esp32/include"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}

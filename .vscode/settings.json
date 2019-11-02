@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "esp_log.h": "c",
+        "nvs_flash.h": "c",
+        "esp_bt.h": "c",
+        "esp_task.h": "c",
+        "freertosconfig.h": "c",
+        "esp_partition.h": "c",
+        "esp_ble_mesh_defs.h": "c"
+    }
+}
