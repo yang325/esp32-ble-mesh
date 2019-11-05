@@ -35,6 +35,11 @@ static void esp_ble_mesh_config_client_cb(esp_ble_mesh_cfg_client_cb_event_t eve
                                     esp_ble_mesh_cfg_client_cb_param_t *param);
 static void esp_ble_mesh_generic_client_cb(esp_ble_mesh_generic_client_cb_event_t event,
                                     esp_ble_mesh_generic_client_cb_param_t *param);
+static void recv_unprov_adv_pkt(uint8_t dev_uuid[16], uint8_t addr[ESP_BD_ADDR_LEN],
+                                    esp_ble_addr_type_t addr_type, uint16_t oob_info,
+                                    uint8_t adv_type, esp_ble_mesh_prov_bearer_t bearer);
+static void prov_complete(int node_idx, const esp_ble_mesh_octet16_t uuid,
+                                    uint16_t unicast, uint8_t elem_num, uint16_t net_idx);
 
 /* Private define ------------------------------------------------------------*/
 
@@ -111,7 +116,7 @@ void app_main(void)
 {
     int err;
 
-    ESP_LOGI(TAG, "Initializing...");
+    ESP_LOGI(TAG, "Initializing ...");
 
     err = bluetooth_init();
     if (err) {
@@ -123,7 +128,10 @@ void app_main(void)
     err = ble_mesh_init();
     if (err) {
         ESP_LOGE(TAG, "Bluetooth mesh init failed (err %d)", err);
+        return;
     }
+
+    ESP_LOGI(TAG, "Have initialized");
 }
 
 static esp_err_t bluetooth_init(void)
@@ -167,7 +175,6 @@ static esp_err_t bluetooth_init(void)
 
 static esp_err_t ble_mesh_init(void)
 {
-    uint8_t match[2] = {0xdd, 0xdd};
     esp_err_t err = 0;
 
     prov_key.net_idx = ESP_BLE_MESH_KEY_PRIMARY;
@@ -179,8 +186,6 @@ static esp_err_t ble_mesh_init(void)
     esp_ble_mesh_register_prov_callback(esp_ble_mesh_prov_cb);
     esp_ble_mesh_register_config_client_callback(esp_ble_mesh_config_client_cb);
     esp_ble_mesh_register_generic_client_callback(esp_ble_mesh_generic_client_cb);
-
-    esp_ble_mesh_provisioner_set_dev_uuid_match(match, sizeof(match), 0x0, false);
 
     err = esp_ble_mesh_init(&provision, &composition);
     if (err) {
@@ -200,17 +205,73 @@ static esp_err_t ble_mesh_init(void)
 static void esp_ble_mesh_prov_cb(esp_ble_mesh_prov_cb_event_t event,
                                     esp_ble_mesh_prov_cb_param_t *param)
 {
-
+    switch (event) {
+        case ESP_BLE_MESH_PROVISIONER_PROV_ENABLE_COMP_EVT:
+            ESP_LOGI(TAG, "ESP_BLE_MESH_PROVISIONER_PROV_ENABLE_COMP_EVT, err_code %d", param->provisioner_prov_enable_comp.err_code);
+            break;
+        case ESP_BLE_MESH_PROVISIONER_RECV_UNPROV_ADV_PKT_EVT:
+            ESP_LOGI(TAG, "ESP_BLE_MESH_PROVISIONER_RECV_UNPROV_ADV_PKT_EVT");
+            recv_unprov_adv_pkt(param->provisioner_recv_unprov_adv_pkt.dev_uuid, param->provisioner_recv_unprov_adv_pkt.addr,
+                            param->provisioner_recv_unprov_adv_pkt.addr_type, param->provisioner_recv_unprov_adv_pkt.oob_info,
+                            param->provisioner_recv_unprov_adv_pkt.adv_type, param->provisioner_recv_unprov_adv_pkt.bearer);
+            break;
+        case ESP_BLE_MESH_PROVISIONER_PROV_COMPLETE_EVT:
+            prov_complete(param->provisioner_prov_complete.node_idx, param->provisioner_prov_complete.device_uuid,
+                            param->provisioner_prov_complete.unicast_addr, param->provisioner_prov_complete.element_num,
+                            param->provisioner_prov_complete.netkey_idx);
+            break;
+        default:
+            break;
+    }
 }
 
 static void esp_ble_mesh_config_client_cb(esp_ble_mesh_cfg_client_cb_event_t event,
                                             esp_ble_mesh_cfg_client_cb_param_t *param)
 {
-
+    switch (event) {
+        case ESP_BLE_MESH_CFG_CLIENT_GET_STATE_EVT:
+            break;
+        case ESP_BLE_MESH_CFG_CLIENT_SET_STATE_EVT:
+            break;
+        case ESP_BLE_MESH_CFG_CLIENT_PUBLISH_EVT:
+            break;
+        case ESP_BLE_MESH_CFG_CLIENT_TIMEOUT_EVT:
+            break;
+        default:
+            break;
+    }
 }
 
 static void esp_ble_mesh_generic_client_cb(esp_ble_mesh_generic_client_cb_event_t event,
                                             esp_ble_mesh_generic_client_cb_param_t *param)
 {
+    switch (event) {
+        case ESP_BLE_MESH_GENERIC_CLIENT_GET_STATE_EVT:
+            break;
+        case ESP_BLE_MESH_GENERIC_CLIENT_SET_STATE_EVT:
+            break;
+        case ESP_BLE_MESH_GENERIC_CLIENT_PUBLISH_EVT:
+            break;
+        case ESP_BLE_MESH_GENERIC_CLIENT_TIMEOUT_EVT:
+            break;
+        default:
+            break;
+    }
+}
 
+static void recv_unprov_adv_pkt(uint8_t dev_uuid[16], uint8_t addr[ESP_BD_ADDR_LEN],
+                                esp_ble_addr_type_t addr_type, uint16_t oob_info,
+                                uint8_t adv_type, esp_ble_mesh_prov_bearer_t bearer)
+{
+    ESP_LOGI(TAG, "address: %s, address type: %d, adv type: %d", bt_hex(addr, ESP_BD_ADDR_LEN), addr_type, adv_type);
+    ESP_LOGI(TAG, "device uuid: %s", bt_hex(dev_uuid, 16));
+    ESP_LOGI(TAG, "oob info: %d, bearer: %s", oob_info, (bearer & ESP_BLE_MESH_PROV_ADV) ? "PB-ADV" : "PB-GATT");
+}
+
+static void prov_complete(int node_idx, const esp_ble_mesh_octet16_t uuid,
+                               uint16_t unicast, uint8_t elem_num, uint16_t net_idx)
+{
+    ESP_LOGI(TAG, "node index: 0x%x, unicast address: 0x%02x, element num: %d, netkey index: 0x%02x",
+             node_idx, unicast, elem_num, net_idx);
+    ESP_LOGI(TAG, "device uuid: %s", bt_hex(uuid, 16));
 }
