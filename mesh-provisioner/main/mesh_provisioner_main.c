@@ -215,10 +215,21 @@ static void esp_ble_mesh_prov_cb(esp_ble_mesh_prov_cb_event_t event,
                             param->provisioner_recv_unprov_adv_pkt.addr_type, param->provisioner_recv_unprov_adv_pkt.oob_info,
                             param->provisioner_recv_unprov_adv_pkt.adv_type, param->provisioner_recv_unprov_adv_pkt.bearer);
             break;
+        case ESP_BLE_MESH_PROVISIONER_PROV_LINK_OPEN_EVT:
+            ESP_LOGI(TAG, "%s link open", param->provisioner_prov_link_open.bearer == ESP_BLE_MESH_PROV_ADV ? "PB-ADV" : "PB-GATT");
+            break;
+        case ESP_BLE_MESH_PROVISIONER_PROV_LINK_CLOSE_EVT:
+            ESP_LOGI(TAG, "%s link close, reason 0x%02x",
+                            param->provisioner_prov_link_close.bearer == ESP_BLE_MESH_PROV_ADV ? "PB-ADV" : "PB-GATT",
+                            param->provisioner_prov_link_close.reason);
+            break;
         case ESP_BLE_MESH_PROVISIONER_PROV_COMPLETE_EVT:
             prov_complete(param->provisioner_prov_complete.node_idx, param->provisioner_prov_complete.device_uuid,
                             param->provisioner_prov_complete.unicast_addr, param->provisioner_prov_complete.element_num,
                             param->provisioner_prov_complete.netkey_idx);
+            break;
+        case ESP_BLE_MESH_PROVISIONER_ADD_UNPROV_DEV_COMP_EVT:
+            ESP_LOGI(TAG, "ESP_BLE_MESH_PROVISIONER_ADD_UNPROV_DEV_COMP_EVT, err_code %d", param->provisioner_add_unprov_dev_comp.err_code);
             break;
         default:
             break;
@@ -228,6 +239,9 @@ static void esp_ble_mesh_prov_cb(esp_ble_mesh_prov_cb_event_t event,
 static void esp_ble_mesh_config_client_cb(esp_ble_mesh_cfg_client_cb_event_t event,
                                             esp_ble_mesh_cfg_client_cb_param_t *param)
 {
+    ESP_LOGI(TAG, "%s, error_code = 0x%02x, event = 0x%02x, addr: 0x%04x, opcode: 0x%04x",
+            __func__, param->error_code, event, param->params->ctx.addr, param->params->opcode);
+
     switch (event) {
         case ESP_BLE_MESH_CFG_CLIENT_GET_STATE_EVT:
             break;
@@ -245,6 +259,9 @@ static void esp_ble_mesh_config_client_cb(esp_ble_mesh_cfg_client_cb_event_t eve
 static void esp_ble_mesh_generic_client_cb(esp_ble_mesh_generic_client_cb_event_t event,
                                             esp_ble_mesh_generic_client_cb_param_t *param)
 {
+    ESP_LOGI(TAG, "%s, error_code = 0x%02x, event = 0x%02x, addr: 0x%04x, opcode: 0x%04x",
+            __func__, param->error_code, event, param->params->ctx.addr, param->params->opcode);
+
     switch (event) {
         case ESP_BLE_MESH_GENERIC_CLIENT_GET_STATE_EVT:
             break;
@@ -263,15 +280,31 @@ static void recv_unprov_adv_pkt(uint8_t dev_uuid[16], uint8_t addr[ESP_BD_ADDR_L
                                 esp_ble_addr_type_t addr_type, uint16_t oob_info,
                                 uint8_t adv_type, esp_ble_mesh_prov_bearer_t bearer)
 {
+    esp_err_t err;
+    esp_ble_mesh_unprov_dev_add_t add_dev;
+
     ESP_LOGI(TAG, "address: %s, address type: %d, adv type: %d", bt_hex(addr, ESP_BD_ADDR_LEN), addr_type, adv_type);
     ESP_LOGI(TAG, "device uuid: %s", bt_hex(dev_uuid, 16));
     ESP_LOGI(TAG, "oob info: %d, bearer: %s", oob_info, (bearer & ESP_BLE_MESH_PROV_ADV) ? "PB-ADV" : "PB-GATT");
+
+    if (ESP_BLE_MESH_PROV_ADV & bearer) {
+        memset(&add_dev, 0, sizeof(esp_ble_mesh_unprov_dev_add_t));
+        memcpy(add_dev.addr, addr, ESP_BD_ADDR_LEN);
+        add_dev.addr_type = addr_type;
+        memcpy(add_dev.uuid, dev_uuid, 16);
+        add_dev.oob_info = oob_info;
+        add_dev.bearer = ESP_BLE_MESH_PROV_ADV;
+        err = esp_ble_mesh_provisioner_add_unprov_dev(&add_dev, ADD_DEV_RM_AFTER_PROV_FLAG | ADD_DEV_START_PROV_NOW_FLAG);
+        if (err) {
+            ESP_LOGE(TAG, "Adding device into list failed (err %d)", err);
+        }
+    }
 }
 
 static void prov_complete(int node_idx, const esp_ble_mesh_octet16_t uuid,
                                uint16_t unicast, uint8_t elem_num, uint16_t net_idx)
 {
     ESP_LOGI(TAG, "node index: 0x%x, unicast address: 0x%02x, element num: %d, netkey index: 0x%02x",
-             node_idx, unicast, elem_num, net_idx);
+                node_idx, unicast, elem_num, net_idx);
     ESP_LOGI(TAG, "device uuid: %s", bt_hex(uuid, 16));
 }
