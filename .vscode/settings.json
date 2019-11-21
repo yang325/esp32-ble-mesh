@@ -7,5 +7,6 @@
         "freertosconfig.h": "c",
         "esp_partition.h": "c",
         "esp_ble_mesh_defs.h": "c"
-    }
+    },
+    "cmake.configureOnOpen": false
 }

@@ -278,8 +278,12 @@ static void esp_ble_mesh_generic_client_cb(esp_ble_mesh_generic_client_cb_event_
             generic_client_get_state(param);
             break;
         case ESP_BLE_MESH_GENERIC_CLIENT_SET_STATE_EVT:
+            ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_SET onoff: 0x%02x",
+                                        param->status_cb.onoff_status.present_onoff);
             break;
         case ESP_BLE_MESH_GENERIC_CLIENT_PUBLISH_EVT:
+            ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_STATUS onoff: 0x%02x",
+                                        param->status_cb.onoff_status.present_onoff);
             break;
         case ESP_BLE_MESH_GENERIC_CLIENT_TIMEOUT_EVT:
             break;
@@ -430,10 +434,30 @@ static void cfg_client_set_state(esp_ble_mesh_cfg_client_cb_param_t *param)
 
 static void generic_client_get_state(esp_ble_mesh_generic_client_cb_param_t *param)
 {
+    esp_err_t err;
+    esp_ble_mesh_client_common_param_t common = {0};
+    esp_ble_mesh_generic_client_set_state_t set_state = {0};
+
     switch (param->params->opcode) {
         case ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_GET:
             ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_GET onoff: 0x%02x",
                             param->status_cb.onoff_status.present_onoff);
+            common.opcode = ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_SET;
+            common.model = onoff_client.model;
+            common.ctx.net_idx = prov_key.net_idx;
+            common.ctx.app_idx = prov_key.app_idx;
+            common.ctx.addr = param->params->ctx.addr;
+            common.ctx.send_ttl = MSG_SEND_TTL;
+            common.ctx.send_rel = false;
+            common.msg_timeout = 0;
+            common.msg_role = ROLE_PROVISIONER;
+            set_state.onoff_set.op_en = false;
+            set_state.onoff_set.onoff = 0x00;
+            set_state.onoff_set.tid = 0;
+            err = esp_ble_mesh_generic_client_set_state(&common, &set_state);
+            if (err) {
+                ESP_LOGE(TAG, "%s: Generic OnOff Set failed", __func__);
+            }
             break;
         default:
             break;
