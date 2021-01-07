@@ -23,10 +23,10 @@
                 "${workspaceFolder}/esp-idf/components/xtensa/esp32/include",
                 "${workspaceFolder}/esp-idf/components/spi_flash/include",
                 "${workspaceFolder}/esp-idf/components/soc/include",
-                "${workspaceFolder}/esp-idf/components/soc/esp32/include"
+                "${workspaceFolder}/esp-idf/components/freertos/xtensa/include"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/clang",
+            "compilerPath": "${HOME}/.espressif/tools/xtensa-esp32-elf/esp-2020r3-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64"
