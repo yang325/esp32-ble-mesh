@@ -3,8 +3,6 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := mesh-provisioner
-
-COMPONENT_ADD_INCLUDEDIRS := components/include
+PROJECT_NAME := blemesh
 
 include $(IDF_PATH)/make/project.mk
